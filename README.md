@@ -1,2 +1,6 @@
-# MapReduce Xueteng Qian, Haiyang Wu
-mapreduce-Nomisv created by GitHub Classroom
+# MapReduce 
+
+Group: Xueteng Qian, Haiyang Wu
+
+Milestone1: See branch Milestone1
+
