@@ -24,6 +24,8 @@ Or
 
 `$ ./main hamlet.txt`
 
-result will be stored in the output file
+Results will be stored in the output file.
+
+We used Spark to test our result, and Spark output the same result.
 
 
