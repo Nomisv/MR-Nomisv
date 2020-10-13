@@ -12,6 +12,14 @@ Example for running word count application:
 
 `$ go run map_reduce_single.go hamlet.txt `
 
+Or
+
+`$ cd src/main`
+
+`$ go build`
+
+`$ ./main hamlet.txt`
+
 result will be stored in the output file
 
 
