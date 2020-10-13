@@ -1,5 +1,9 @@
 # Milestone 1
 
+Group: Xueteng Qian, Haiyang Wu
+
+We have the same code and files.
+
 In this stage, since we only need to use one map worker and one reduce worker,
 we call `mapWorker` once to produce intermediate data and call `reduceWorker` once to process intermediate data and output result to a file.
 
