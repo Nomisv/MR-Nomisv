@@ -46,6 +46,10 @@ func askForTask() {
 
 }
 
+func reportTask() {
+
+}
+
 // worker: ask for tasks and report tasks
 // parameters: map function and reduce function
 func Worker(mapFunction func(string, string) []KeyValue, reduceFunction func(string, []string) string) {
@@ -58,19 +62,31 @@ func Worker(mapFunction func(string, string) []KeyValue, reduceFunction func(str
 	}
 }
 
-func executeTasks(mapFunction func(string, string) []KeyValue, reduceFunction func(string, []string) string) {
-
+func executeTasks(mapFunction func(string, string) []KeyValue, reduceFunction func(string, []string) string, task Task) bool {
+	if task.taskType == "map" {
+		if mapWorker(mapFunction, task.taskFile, task.taskIndex, task.numReduce) == false {
+			return false
+		}
+	} else if task.taskType == "reduce" {
+		if reduceWorker(reduceFunction, task.numMap, task.taskIndex) == false {
+			return false
+		}
+	} else {
+		fmt.Println("executeTasks error")
+		return false
+	}
+	return true
 }
 
 // ################### workers for executing tasks #####################
-func mapWorker(mapFunction func(string, string) []KeyValue, inputFile string, mapTaskIndex int, numReduce int) {
+func mapWorker(mapFunction func(string, string) []KeyValue, inputFile string, mapTaskIndex int, numReduce int) bool {
 	// intermediate := []KeyValue{}
 	// read data from input file
 	data, err := ioutil.ReadFile(inputFile)
 	if err != nil {
 		fmt.Println("map worker failed reading data from: " + inputFile)
 		// exit
-		os.Exit(1)
+		return false
 	}
 	// load: map function, reduce function
 	// mapFunction, reduceFunction := load_map_reduce(os.Args[1])
@@ -82,7 +98,11 @@ func mapWorker(mapFunction func(string, string) []KeyValue, inputFile string, ma
 		// intermediate file, name rule: mapreduce_mapTaskIndex_i
 		intermediateFile := "intermediate_" + strconv.Itoa(mapTaskIndex) + "_" + strconv.Itoa(i)
 		fmt.Println("intermediate file name:" + intermediateFile)
-		file, _ := os.Create(intermediateFile)
+		file, err := os.Create(intermediateFile)
+		if err != nil {
+			fmt.Println("failed create file")
+			return false
+		}
 		encode := json.NewEncoder(file)
 		for _, keyVal := range keyVals {
 			//FIXME: unsigned int to int, may not work
@@ -93,14 +113,14 @@ func mapWorker(mapFunction func(string, string) []KeyValue, inputFile string, ma
 		file.Close()
 
 	}
-
+	return true
 	// intermediate = append(intermediate, keyVal...)
 	// sort by key
 	// sort.Sort(sortKey(intermediate))
 	// return
 }
 
-func reduceWorker(reduceFunction func(string, []string) string, numMap int, reduceTaskIndex int) {
+func reduceWorker(reduceFunction func(string, []string) string, numMap int, reduceTaskIndex int) bool {
 
 	// container to store all key value pairs in intermediate file
 	intermediate := []KeyValue{}
@@ -112,7 +132,8 @@ func reduceWorker(reduceFunction func(string, []string) string, numMap int, redu
 		if err != nil {
 			fmt.Println("reduce worker failed opening file: " + intermediateFile)
 			// exit
-			os.Exit(1)
+			// os.Exit(1)
+			return false
 		}
 		// decode file
 		decode := json.NewDecoder(file)
@@ -159,4 +180,5 @@ func reduceWorker(reduceFunction func(string, []string) string, numMap int, redu
 		i = j
 	}
 	outputFile.Close()
+	return true
 }
