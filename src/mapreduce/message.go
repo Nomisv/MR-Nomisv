@@ -14,3 +14,13 @@ type Task struct {
 	// task index
 	taskIndex int
 }
+
+type job_Dist_Message struct {
+	Task     Task
+	TaskDone bool
+}
+
+type report_Message struct {
+	TaskIndex int
+	IsDone    bool
+}
