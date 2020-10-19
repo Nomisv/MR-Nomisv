@@ -100,7 +100,8 @@ func (master *Masterinfo) JobDistribute(arg bool, reply *Job_Dist_Message) error
 
 // method for dealing with task report from worker
 func (master *Masterinfo) JobDone(arg bool, finish *Report_Message) error {
-
+	// test
+	fmt.Println("received report message, task index:", finish.TaskIndex, "is done?", finish.IsDone)
 	if finish.IsDone == true {
 		// job done
 		master.jobStateQ[finish.TaskIndex].Status = "finish"
@@ -115,11 +116,13 @@ func (master *Masterinfo) JobDone(arg bool, finish *Report_Message) error {
 func (master *Masterinfo) CheckTaskFinished() bool {
 
 	finished := false
+	finishedTasks := 0
 	master.Mutex.Lock()
 	defer master.Mutex.Unlock()
-
+	// check each task by taskIndex
 	for taskIndex, state := range master.jobStateQ {
 		currStatus := state.Status
+		fmt.Println("current task:", taskIndex, currStatus)
 		if currStatus == "ready" {
 			master.add_Job(taskIndex)
 			fmt.Println(taskIndex, "job added to queue")
@@ -132,21 +135,27 @@ func (master *Masterinfo) CheckTaskFinished() bool {
 			}
 		} else if currStatus == "finish" {
 			// if current phase is map, the task is not done yet, call reduce_start()
-			if master.MapOrRed == "map" {
-				master.reduce_Start()
-			} else { // if current phase is reduce and task is finished
-				master.finish = true
-				// close channel
-				close(master.jobQ)
-				finished = true
-			}
-
+			finishedTasks++
 		} else if currStatus == "error" {
 			master.add_Job(taskIndex)
 		} else if currStatus == "queue" {
 			fmt.Println("task in queue", taskIndex)
 		} else { // other status ?
 			fmt.Println(currStatus + "status exception")
+		}
+	}
+	// if the number of finished tasks == N, current phase complete
+	if finishedTasks == master.N {
+		if master.MapOrRed == "map" {
+			master.reduce_Start()
+		} else if master.MapOrRed == "reduce" {
+			// if current phase is reduce and tasks are finished
+			master.finish = true
+			// close channel
+			close(master.jobQ)
+			finished = true
+		} else {
+			log.Fatalf("master phase error")
 		}
 	}
 
