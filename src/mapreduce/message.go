@@ -5,7 +5,7 @@ type Task struct {
 	taskType string
 	// task file name
 	taskFile string
-	// number of map
+	// number of map, in this assignemnt numMap = numReduce
 	numMap int
 	// number of reduce
 	numReduce int
@@ -14,6 +14,8 @@ type Task struct {
 	// task index
 	taskIndex int
 }
+
+// ref: https://golang.org/pkg/net/rpc/#Call
 
 type job_Dist_Message struct {
 	Task     Task
