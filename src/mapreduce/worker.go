@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"hash/fnv"
 	"io/ioutil"
+	"log"
+	"net/rpc"
 	"os"
 	"sort"
 	"strconv"
@@ -42,12 +44,35 @@ func hash(key string) uint32 {
 	return h.Sum32()
 }
 
-func askForTask() {
+// ref: https://golang.org/pkg/net/rpc/
 
+func askForTask() job_Dist_Message {
+	// use rpc
+	//FIXME: might cause problem
+	client, err := rpc.DialHTTP("unix", "mapreduce")
+	if err != nil {
+		log.Fatal("dialing:", err)
+	}
+	askMsg := job_Dist_Message{}
+	err = client.Call("master-job_Distribute", true, askMsg)
+	if err != nil {
+		log.Fatal("failed ask for task")
+	}
+	return askMsg
 }
 
-func reportTask() {
-
+func reportTask(taskIndex int, finish bool) report_Message {
+	//FIXME: might cause problem
+	client, err := rpc.DialHTTP("unix", "mapreduce")
+	if err != nil {
+		log.Fatal("dialing:", err)
+	}
+	reportMsg := report_Message{}
+	err = client.Call("master-job_Done", true, reportMsg)
+	if err != nil {
+		log.Fatal("failed report task")
+	}
+	return reportMsg
 }
 
 // worker: ask for tasks and report tasks
@@ -55,10 +80,17 @@ func reportTask() {
 func Worker(mapFunction func(string, string) []KeyValue, reduceFunction func(string, []string) string) {
 	for {
 		// request tasks
-
-		// execute tasks
-
-		// report tasks
+		askMsg := askForTask()
+		if askMsg.TaskDone == true {
+			// the whole map reduce task is done, we dont need to request task anymore
+			break
+		}
+		// execute tasks and report false if mission failed
+		if executeTasks(mapFunction, reduceFunction, askMsg.Task) == false {
+			reportTask(askMsg.Task.taskIndex, false)
+		}
+		// report tasks succeed if mission complete
+		reportTask(askMsg.Task.taskIndex, true)
 	}
 }
 
