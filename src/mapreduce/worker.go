@@ -68,6 +68,11 @@ func reportTask(taskIndex int, finish bool) Report_Message {
 		log.Fatal("dialing:", err)
 	}
 	reportMsg := Report_Message{}
+	reportMsg.IsDone = finish
+	reportMsg.TaskIndex = taskIndex
+	// test
+	fmt.Println("report message, task index:", reportMsg.TaskIndex, "is done?", reportMsg.IsDone)
+
 	err = client.Call("Masterinfo.JobDone", true, &reportMsg)
 	if err != nil {
 		log.Fatal("failed report task")
@@ -87,10 +92,12 @@ func Worker(mapFunction func(string, string) []KeyValue, reduceFunction func(str
 		}
 		// execute tasks and report false if mission failed
 		if executeTasks(mapFunction, reduceFunction, askMsg.Task) == false {
+			fmt.Println("failed execute task", askMsg.Task.TaskIndex)
 			reportTask(askMsg.Task.TaskIndex, false)
 		}
 		// report tasks succeed if mission complete
 		reportTask(askMsg.Task.TaskIndex, true)
+
 	}
 }
 
@@ -125,7 +132,7 @@ func mapWorker(mapFunction func(string, string) []KeyValue, inputFile string, ma
 
 	// call UDF map function to produce key value pairs
 	keyVals := mapFunction(inputFile, string(data))
-	fmt.Println(numReduce)
+	// fmt.Println(numReduce)
 	for i := 0; i < numReduce; i++ {
 		// intermediate file, name rule: mapreduce_mapTaskIndex_i
 		intermediateFile := "intermediate_" + strconv.Itoa(mapTaskIndex) + "_" + strconv.Itoa(i)
