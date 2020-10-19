@@ -46,29 +46,29 @@ func hash(key string) uint32 {
 
 // ref: https://golang.org/pkg/net/rpc/
 
-func askForTask() job_Dist_Message {
+func askForTask() Job_Dist_Message {
 	// use rpc
 	//FIXME: might cause problem
 	client, err := rpc.DialHTTP("unix", "mapreduce")
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
-	askMsg := job_Dist_Message{}
-	err = client.Call("master-job_Distribute", true, askMsg)
+	askMsg := Job_Dist_Message{}
+	err = client.Call("Masterinfo.JobDistribute", true, &askMsg)
 	if err != nil {
-		log.Fatal("failed ask for task")
+		log.Fatal("failed ask for task", err)
 	}
 	return askMsg
 }
 
-func reportTask(taskIndex int, finish bool) report_Message {
+func reportTask(taskIndex int, finish bool) Report_Message {
 	//FIXME: might cause problem
 	client, err := rpc.DialHTTP("unix", "mapreduce")
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
-	reportMsg := report_Message{}
-	err = client.Call("master-job_Done", true, reportMsg)
+	reportMsg := Report_Message{}
+	err = client.Call("Masterinfo.JobDone", true, &reportMsg)
 	if err != nil {
 		log.Fatal("failed report task")
 	}
@@ -87,20 +87,20 @@ func Worker(mapFunction func(string, string) []KeyValue, reduceFunction func(str
 		}
 		// execute tasks and report false if mission failed
 		if executeTasks(mapFunction, reduceFunction, askMsg.Task) == false {
-			reportTask(askMsg.Task.taskIndex, false)
+			reportTask(askMsg.Task.TaskIndex, false)
 		}
 		// report tasks succeed if mission complete
-		reportTask(askMsg.Task.taskIndex, true)
+		reportTask(askMsg.Task.TaskIndex, true)
 	}
 }
 
 func executeTasks(mapFunction func(string, string) []KeyValue, reduceFunction func(string, []string) string, task Task) bool {
-	if task.taskType == "map" {
-		if mapWorker(mapFunction, task.taskFile, task.taskIndex, task.numReduce) == false {
+	if task.TaskType == "map" {
+		if mapWorker(mapFunction, task.TaskFile, task.TaskIndex, task.NumReduce) == false {
 			return false
 		}
-	} else if task.taskType == "reduce" {
-		if reduceWorker(reduceFunction, task.numMap, task.taskIndex) == false {
+	} else if task.TaskType == "reduce" {
+		if reduceWorker(reduceFunction, task.NumMap, task.TaskIndex) == false {
 			return false
 		}
 	} else {
@@ -125,7 +125,7 @@ func mapWorker(mapFunction func(string, string) []KeyValue, inputFile string, ma
 
 	// call UDF map function to produce key value pairs
 	keyVals := mapFunction(inputFile, string(data))
-
+	fmt.Println(numReduce)
 	for i := 0; i < numReduce; i++ {
 		// intermediate file, name rule: mapreduce_mapTaskIndex_i
 		intermediateFile := "intermediate_" + strconv.Itoa(mapTaskIndex) + "_" + strconv.Itoa(i)
