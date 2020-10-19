@@ -2,27 +2,27 @@ package mapreduce
 
 type Task struct {
 	// task type, map or reduce
-	taskType string
+	TaskType string
 	// task file name
-	taskFile string
+	TaskFile string
 	// number of map, in this assignemnt numMap = numReduce
-	numMap int
+	NumMap int
 	// number of reduce
-	numReduce int
+	NumReduce int
 	// task status: finished or not
-	taskFinished bool
+	TaskFinished bool
 	// task index
-	taskIndex int
+	TaskIndex int
 }
 
 // ref: https://golang.org/pkg/net/rpc/#Call
 
-type job_Dist_Message struct {
+type Job_Dist_Message struct {
 	Task     Task
 	TaskDone bool
 }
 
-type report_Message struct {
+type Report_Message struct {
 	TaskIndex int
 	IsDone    bool
 }
