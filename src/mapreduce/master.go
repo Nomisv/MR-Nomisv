@@ -42,19 +42,19 @@ type TaskState struct {
 	StartTime time.Time
 }
 
-func master_Start(reduce_n int, input_File []string) *Masterinfo {
+func Master_Start(reduce_n int, input_File []string) *Masterinfo {
 
-	master := Masterinfo{}
 	//initialize the master with input parameters
-	master.initial_Master(reduce_n, input_File)
+	master := Initial_Master(reduce_n, input_File)
 	// start master server
-	master.start_server()
+	master.Start_server()
 
 	return &master
 }
 
-func (master *Masterinfo) initial_Master(reduce_n int, input_File []string) {
+func Initial_Master(reduce_n int, input_File []string) Masterinfo {
 	// initialize the Master
+	master := Masterinfo{}
 	master.finish = false
 	master.filename = input_File
 	master.N = reduce_n
@@ -64,10 +64,11 @@ func (master *Masterinfo) initial_Master(reduce_n int, input_File []string) {
 	for k := range master.jobStateQ {
 		master.jobStateQ[k].Status = "ready"
 	}
+	return master
 }
 
 // start server to listen
-func (master *Masterinfo) start_server() {
+func (master *Masterinfo) Start_server() {
 	rpc.Register(master)
 	rpc.HandleHTTP()
 	//l, e := net.Listen("tcp", "127.0.0.1:1234")
@@ -80,15 +81,15 @@ func (master *Masterinfo) start_server() {
 }
 
 // method for dealing with task asked from worker
-func (master *Masterinfo) job_Distribute(arg bool, reply *job_Dist_Message) error {
+func (master *Masterinfo) JobDistribute(arg bool, reply *Job_Dist_Message) error {
 
 	job, ok := <-master.jobQ
 	if ok == true {
 		reply.Task = job
 		// job running
-		master.jobStateQ[job.taskIndex].Status = "executing"
+		master.jobStateQ[job.TaskIndex].Status = "executing"
 		// job time record
-		master.jobStateQ[job.taskIndex].StartTime = time.Now()
+		master.jobStateQ[job.TaskIndex].StartTime = time.Now()
 	} else {
 		// check if there is any other job to distribute
 		reply.TaskDone = true
@@ -98,7 +99,7 @@ func (master *Masterinfo) job_Distribute(arg bool, reply *job_Dist_Message) erro
 }
 
 // method for dealing with task report from worker
-func (master *Masterinfo) job_Done(arg bool, finish *report_Message) error {
+func (master *Masterinfo) JobDone(arg bool, finish *Report_Message) error {
 
 	if finish.IsDone == true {
 		// job done
@@ -111,7 +112,7 @@ func (master *Masterinfo) job_Done(arg bool, finish *report_Message) error {
 }
 
 // check if the whole map reduce task is finished
-func (master *Masterinfo) checkTaskFinished() bool {
+func (master *Masterinfo) CheckTaskFinished() bool {
 
 	finished := false
 	master.Mutex.Lock()
@@ -121,6 +122,7 @@ func (master *Masterinfo) checkTaskFinished() bool {
 		currStatus := state.Status
 		if currStatus == "ready" {
 			master.add_Job(taskIndex)
+			fmt.Println(taskIndex, "job added to queue")
 		} else if currStatus == "executing" {
 			elapsed := time.Now().Sub(state.StartTime)
 			fifteenSeconds, _ := time.ParseDuration("15s")
@@ -141,8 +143,10 @@ func (master *Masterinfo) checkTaskFinished() bool {
 
 		} else if currStatus == "error" {
 			master.add_Job(taskIndex)
+		} else if currStatus == "queue" {
+			fmt.Println("task in queue", taskIndex)
 		} else { // other status ?
-			fmt.Println("status exception")
+			fmt.Println(currStatus + "status exception")
 		}
 	}
 
@@ -167,15 +171,15 @@ func (master *Masterinfo) add_Job(task_Index int) {
 	// initialize a job
 	master.jobStateQ[task_Index].Status = "queue"
 	job := Task{
-		taskFile:     "",
-		numMap:       len(master.filename),
-		numReduce:    master.N,
-		taskIndex:    task_Index,
-		taskType:     master.MapOrRed,
-		taskFinished: false,
+		TaskFile:     "",
+		NumMap:       len(master.filename),
+		NumReduce:    master.N,
+		TaskIndex:    task_Index,
+		TaskType:     master.MapOrRed,
+		TaskFinished: false,
 	}
 	if master.MapOrRed == "map" {
-		job.taskFile = master.filename[task_Index]
+		job.TaskFile = master.filename[task_Index]
 	}
 	// put the job into job queue
 	master.jobQ <- job
