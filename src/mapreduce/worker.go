@@ -54,7 +54,8 @@ func askForTask() Job_Dist_Message {
 		log.Fatal("dialing:", err)
 	}
 	askMsg := Job_Dist_Message{}
-	err = client.Call("Masterinfo.JobDistribute", true, &askMsg)
+	var reply bool
+	err = client.Call("Masterinfo.JobDistribute", &reply, &askMsg)
 	if err != nil {
 		log.Fatal("failed ask for task", err)
 	}
@@ -63,20 +64,23 @@ func askForTask() Job_Dist_Message {
 
 func reportTask(taskIndex int, finish bool) Report_Message {
 	//FIXME: might cause problem
+	reportMsg := Report_Message{}
+	reportMsg.IsDone = finish
+	reportMsg.TaskIndex = taskIndex
+	// dial
 	client, err := rpc.DialHTTP("unix", "mapreduce")
 	if err != nil {
 		log.Fatal("dialing:", err)
 	}
-	reportMsg := Report_Message{}
-	reportMsg.IsDone = finish
-	reportMsg.TaskIndex = taskIndex
+	// rpc
+	var reply bool
+	err = client.Call("Masterinfo.JobDone", &reportMsg, &reply)
+	if err != nil {
+		log.Fatal("failed report task", err)
+	}
 	// test
 	fmt.Println("report message, task index:", reportMsg.TaskIndex, "is done?", reportMsg.IsDone)
 
-	err = client.Call("Masterinfo.JobDone", true, &reportMsg)
-	if err != nil {
-		log.Fatal("failed report task")
-	}
 	return reportMsg
 }
 
@@ -88,6 +92,7 @@ func Worker(mapFunction func(string, string) []KeyValue, reduceFunction func(str
 		askMsg := askForTask()
 		if askMsg.TaskDone == true {
 			// the whole map reduce task is done, we dont need to request task anymore
+			fmt.Println("all work done")
 			break
 		}
 		// execute tasks and report false if mission failed
@@ -160,7 +165,7 @@ func mapWorker(mapFunction func(string, string) []KeyValue, inputFile string, ma
 }
 
 func reduceWorker(reduceFunction func(string, []string) string, numMap int, reduceTaskIndex int) bool {
-
+	fmt.Println("reduce worker working")
 	// container to store all key value pairs in intermediate file
 	intermediate := []KeyValue{}
 	// FIXME: redeclare i in the for loop below this one might cause problem?
