@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/rpc"
 	"os"
@@ -126,21 +126,81 @@ func executeTasks(mapFunction func(string, string) []KeyValue, reduceFunction fu
 func mapWorker(mapFunction func(string, string) []KeyValue, inputFile string, mapTaskIndex int, numReduce int) bool {
 	// intermediate := []KeyValue{}
 	// read data from input file
-	data, err := ioutil.ReadFile(inputFile)
+
+	/*
+		data, err := ioutil.ReadFile(inputFile)
+		if err != nil {
+			fmt.Println("map worker failed reading data from: " + inputFile)
+			// exit
+			return false
+		}
+	*/
+
+	// ---------------------- get block --------
+	datas := "1"
+	f, err := os.Open(inputFile)
 	if err != nil {
 		fmt.Println("map worker failed reading data from: " + inputFile)
-		// exit
-		return false
+	} else {
+		//get the size of the file
+
+		n, _ := f.Seek(0, 2)
+		size := int(n) / numReduce
+
+		i := 0
+
+		datas = ""
+		start := size * mapTaskIndex
+
+		loc := start
+		for true {
+			bs := make([]byte, size+i)
+
+			_, err := f.ReadAt(bs, int64(loc))
+
+			//END OF FILE
+			datas = string(bs)
+			if err != nil {
+				break
+			}
+			//end of line
+
+			if string(bs[0]) == "\n" {
+				break
+			}
+			loc--
+		}
+
+		for true {
+			bs := make([]byte, size+i)
+
+			_, err := f.ReadAt(bs, int64(loc))
+			//END OF FILE
+			if err == io.EOF {
+				break
+			}
+			//end of line
+			datas = string(bs)
+			if datas[len(datas)-1:] == "\n" {
+				break
+			}
+			i++
+		}
+
 	}
+
+	// ---------------------------------------
+
 	// load: map function, reduce function
 	// mapFunction, reduceFunction := load_map_reduce(os.Args[1])
 
 	// call UDF map function to produce key value pairs
-	keyVals := mapFunction(inputFile, string(data))
+	// keyVals := mapFunction(inputFile, string(data))
+	keyVals := mapFunction(inputFile, datas)
 	// fmt.Println(numReduce)
 	for i := 0; i < numReduce; i++ {
 		// intermediate file, name rule: mapreduce_mapTaskIndex_i
-		intermediateFile := "intermediate_" + strconv.Itoa(mapTaskIndex) + "_" + strconv.Itoa(i)
+		intermediateFile := "intermediate_map" + strconv.Itoa(mapTaskIndex) + "_reduce" + strconv.Itoa(i)
 		fmt.Println("intermediate file name:" + intermediateFile)
 		file, err := os.Create(intermediateFile)
 		if err != nil {
@@ -171,7 +231,7 @@ func reduceWorker(reduceFunction func(string, []string) string, numMap int, redu
 	// FIXME: redeclare i in the for loop below this one might cause problem?
 	for i := 0; i < numMap; i++ {
 		// get intermediate file name
-		intermediateFile := "intermediate_" + strconv.Itoa(i) + "_" + strconv.Itoa(reduceTaskIndex)
+		intermediateFile := "intermediate_map" + strconv.Itoa(i) + "_reduce" + strconv.Itoa(reduceTaskIndex)
 		file, err := os.Open(intermediateFile)
 		if err != nil {
 			fmt.Println("reduce worker failed opening file: " + intermediateFile)
