@@ -9,12 +9,12 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 2 {
+	if len(os.Args) != 2 {
 		fmt.Println("Correct usage: master_main inputFileName.")
 		os.Exit(1)
 	}
 	// call master.go in /mapreduce
-	master := mapreduce.Master_Start(1, os.Args[1:])
+	master := mapreduce.Master_Start(2, os.Args[1])
 
 	// check if task is done
 	for master.CheckTaskFinished() == false {
