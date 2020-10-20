@@ -143,50 +143,49 @@ func mapWorker(mapFunction func(string, string) []KeyValue, inputFile string, ma
 		fmt.Println("map worker failed reading data from: " + inputFile)
 	} else {
 		//get the size of the file
-
+		//get the size of the file
 		n, _ := f.Seek(0, 2)
 		size := int(n) / numReduce
-
-		i := 0
-
 		datas = ""
 		start := size * mapTaskIndex
-
 		loc := start
+
 		for true {
-			bs := make([]byte, size+i)
+			bs := make([]byte, size)
 
-			_, err := f.ReadAt(bs, int64(loc))
+			f.ReadAt(bs, int64(loc))
 
-			//END OF FILE
 			datas = string(bs)
-			if err != nil {
+			if loc == 0 {
 				break
 			}
-			//end of line
-
 			if string(bs[0]) == "\n" {
 				break
 			}
-			loc--
+			if string(bs[0]) == " " {
+				break
+			}
+			datas = string(bs)
+			loc++
+			size--
 		}
-
 		for true {
-			bs := make([]byte, size+i)
-
+			bs := make([]byte, size)
 			_, err := f.ReadAt(bs, int64(loc))
-			//END OF FILE
+			datas = string(bs)
 			if err == io.EOF {
 				break
 			}
-			//end of line
-			datas = string(bs)
-			if datas[len(datas)-1:] == "\n" {
+			if string(bs[len(bs)-1]) == "\n" {
 				break
 			}
-			i++
-		}
+			if string(bs[len(bs)-1]) == " " {
+				break
+			}
+			datas = string(bs)
+			size++
 
+		}
 	}
 
 	// ---------------------------------------
