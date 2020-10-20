@@ -81,7 +81,7 @@ func (master *Masterinfo) Start_server() {
 }
 
 // method for dealing with task asked from worker
-func (master *Masterinfo) JobDistribute(arg bool, reply *Job_Dist_Message) error {
+func (master *Masterinfo) JobDistribute(arg *bool, reply *Job_Dist_Message) error {
 
 	job, ok := <-master.jobQ
 	if ok == true {
@@ -99,7 +99,7 @@ func (master *Masterinfo) JobDistribute(arg bool, reply *Job_Dist_Message) error
 }
 
 // method for dealing with task report from worker
-func (master *Masterinfo) JobDone(arg bool, finish *Report_Message) error {
+func (master *Masterinfo) JobDone(finish *Report_Message, arg *bool) error {
 	// test
 	fmt.Println("received report message, task index:", finish.TaskIndex, "is done?", finish.IsDone)
 	if finish.IsDone == true {
@@ -134,7 +134,6 @@ func (master *Masterinfo) CheckTaskFinished() bool {
 				master.add_Job(taskIndex)
 			}
 		} else if currStatus == "finish" {
-			// if current phase is map, the task is not done yet, call reduce_start()
 			finishedTasks++
 		} else if currStatus == "error" {
 			master.add_Job(taskIndex)
@@ -147,6 +146,7 @@ func (master *Masterinfo) CheckTaskFinished() bool {
 	// if the number of finished tasks == N, current phase complete
 	if finishedTasks == master.N {
 		if master.MapOrRed == "map" {
+			// if current phase is map, the task is not done yet, call reduce_start()
 			master.reduce_Start()
 		} else if master.MapOrRed == "reduce" {
 			// if current phase is reduce and tasks are finished
@@ -165,13 +165,14 @@ func (master *Masterinfo) CheckTaskFinished() bool {
 // initialize reduce
 func (master *Masterinfo) reduce_Start() {
 	// if map jobs are done, we start reduce jobs
+	fmt.Println("start reduce")
 	for i := range master.jobStateQ {
 		master.jobStateQ[i].Status = "ready"
 	}
 	// change job type to reduce
 	master.MapOrRed = "reduce"
 	master.finish = false
-	master.jobStateQ = make([]TaskState, master.N)
+	// master.jobStateQ = make([]TaskState, master.N)
 
 }
 
