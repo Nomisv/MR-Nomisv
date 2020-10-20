@@ -1,5 +1,4 @@
-# go build -buildmode=plugin wc.go &
-# go run master_main.go hamlet.txt 2 &
+# multiple workers
 go run worker_main.go wc.so &
 go run worker_main.go wc.so &
 go run worker_main.go wc.so
