@@ -17,7 +17,7 @@ type Masterinfo struct {
 	// number of reduce
 	N int
 
-	filename []string
+	filename string
 
 	// is mapping or reducing
 	MapOrRed string
@@ -42,7 +42,7 @@ type TaskState struct {
 	StartTime time.Time
 }
 
-func Master_Start(reduce_n int, input_File []string) *Masterinfo {
+func Master_Start(reduce_n int, input_File string) *Masterinfo {
 
 	//initialize the master with input parameters
 	master := Initial_Master(reduce_n, input_File)
@@ -52,7 +52,7 @@ func Master_Start(reduce_n int, input_File []string) *Masterinfo {
 	return &master
 }
 
-func Initial_Master(reduce_n int, input_File []string) Masterinfo {
+func Initial_Master(reduce_n int, input_File string) Masterinfo {
 	// initialize the Master
 	master := Masterinfo{}
 	master.finish = false
@@ -60,7 +60,7 @@ func Initial_Master(reduce_n int, input_File []string) Masterinfo {
 	master.N = reduce_n
 	master.MapOrRed = "map"
 	master.jobStateQ = make([]TaskState, master.N)
-	master.jobQ = make(chan Task, 10)
+	master.jobQ = make(chan Task, master.N)
 	for k := range master.jobStateQ {
 		master.jobStateQ[k].Status = "ready"
 	}
@@ -182,14 +182,14 @@ func (master *Masterinfo) add_Job(task_Index int) {
 	master.jobStateQ[task_Index].Status = "queue"
 	job := Task{
 		TaskFile:     "",
-		NumMap:       len(master.filename),
+		NumMap:       master.N,
 		NumReduce:    master.N,
 		TaskIndex:    task_Index,
 		TaskType:     master.MapOrRed,
 		TaskFinished: false,
 	}
 	if master.MapOrRed == "map" {
-		job.TaskFile = master.filename[task_Index]
+		job.TaskFile = master.filename
 	}
 	// put the job into job queue
 	master.jobQ <- job
