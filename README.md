@@ -16,6 +16,8 @@ Due to some tiny bugs with splitting files, our program works only if the size o
 
 We will fix this problem soon.
 
+In the following example, we could run 2,3,6 (or common multiple of 6) number of workers on `hamlet.txt` and output the correct result.
+
 # Run Test
 
 `$ cd src/main`
