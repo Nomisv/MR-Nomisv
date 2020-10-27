@@ -1,4 +1,7 @@
+go run master_main.go hamlet.txt 5 & sleep 1
 # multiple workers
+go run worker_main.go wc.so &
+go run worker_main.go wc.so &
 go run worker_main.go wc.so &
 go run worker_main.go wc.so &
 go run worker_main.go wc.so
