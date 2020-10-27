@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
-	"io"
 	"log"
 	"net/rpc"
 	"os"
@@ -136,7 +135,7 @@ func mapWorker(mapFunction func(string, string) []KeyValue, inputFile string, ma
 		}
 	*/
 
-	// ---------------------- get block --------
+	// ---------------------- get block by offset--------
 	datas := "1"
 	f, err := os.Open(inputFile)
 	if err != nil {
@@ -159,6 +158,16 @@ func mapWorker(mapFunction func(string, string) []KeyValue, inputFile string, ma
 			if loc == 0 {
 				break
 			}
+			// check one byte before start
+			oneprevious := make([]byte, 1)
+			f.ReadAt(oneprevious, int64(start-1))
+			if string(oneprevious) == "\n" {
+				break
+			}
+			if string(oneprevious) == " " {
+				break
+			}
+			// check current byte
 			if string(bs[0]) == "\n" {
 				break
 			}
@@ -170,10 +179,13 @@ func mapWorker(mapFunction func(string, string) []KeyValue, inputFile string, ma
 			size--
 		}
 		for true {
+			if mapTaskIndex == (numReduce - 1) {
+				size = size * 2
+			}
 			bs := make([]byte, size)
 			_, err := f.ReadAt(bs, int64(loc))
 			datas = string(bs)
-			if err == io.EOF {
+			if err != nil {
 				break
 			}
 			if string(bs[len(bs)-1]) == "\n" {
@@ -184,7 +196,6 @@ func mapWorker(mapFunction func(string, string) []KeyValue, inputFile string, ma
 			}
 			datas = string(bs)
 			size++
-
 		}
 	}
 
