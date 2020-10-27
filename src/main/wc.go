@@ -1,18 +1,18 @@
 package main
 
-//
-// a word-count application "plugin" for MapReduce.
-//
+// use the following command to turn wc.go to wc.so
 // go build -buildmode=plugin wc.go
-//
 
+import (
+	"log"
+	"regexp"
+	"strconv"
+	"strings"
 
-import "log"
-import "regexp"
-import "strings"
-import "strconv"
+	"../mapreduce"
+)
 
-func wcMap(filename string, text string) []KeyValue {
+func Map(filename string, text string) []mapreduce.KeyValue {
 	// use regular expression to eliminate punctuations and symbols
 	reg, err := regexp.Compile("[^a-zA-Z0-9]+")
 	if err != nil {
@@ -23,15 +23,15 @@ func wcMap(filename string, text string) []KeyValue {
 	wordlist := strings.Fields(processedString)
 
 	// create key value pairs for each word
-	kvpair := []KeyValue{}
+	kvpair := []mapreduce.KeyValue{}
 	for _, word := range wordlist {
-		pair := KeyValue{word, "1"}
+		pair := mapreduce.KeyValue{word, "1"}
 		kvpair = append(kvpair, pair)
 	}
 	return kvpair
 }
 
-func wcReduce(key string, words []string) string {
+func Reduce(key string, words []string) string {
 	//count the occurrence of the word
 	len := int64(len(words))
 	//convert to string
