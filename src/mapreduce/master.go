@@ -101,7 +101,7 @@ func (master *Masterinfo) JobDistribute(arg *bool, reply *Job_Dist_Message) erro
 // method for dealing with task report from worker
 func (master *Masterinfo) JobDone(finish *Report_Message, arg *bool) error {
 	// test
-	fmt.Println("received report message, task index:", finish.TaskIndex, "is done?", finish.IsDone)
+	// fmt.Println("received report message, task index:", finish.TaskIndex, "is done?", finish.IsDone)
 	if finish.IsDone == true {
 		// job done
 		master.jobStateQ[finish.TaskIndex].Status = "finish"
@@ -122,10 +122,10 @@ func (master *Masterinfo) CheckTaskFinished() bool {
 	// check each task by taskIndex
 	for taskIndex, state := range master.jobStateQ {
 		currStatus := state.Status
-		fmt.Println("current task:", taskIndex, currStatus)
+		// fmt.Println("current task:", taskIndex, currStatus)
 		if currStatus == "ready" {
 			master.add_Job(taskIndex)
-			fmt.Println(taskIndex, "job added to queue")
+			// fmt.Println(taskIndex, "job added to queue")
 		} else if currStatus == "executing" {
 			elapsed := time.Now().Sub(state.StartTime)
 			fifteenSeconds, _ := time.ParseDuration("15s")
@@ -138,7 +138,7 @@ func (master *Masterinfo) CheckTaskFinished() bool {
 		} else if currStatus == "error" {
 			master.add_Job(taskIndex)
 		} else if currStatus == "queue" {
-			fmt.Println("task in queue", taskIndex)
+			// fmt.Println("task in queue", taskIndex)
 		} else { // other status ?
 			fmt.Println(currStatus + "status exception")
 		}

@@ -78,7 +78,7 @@ func reportTask(taskIndex int, finish bool) Report_Message {
 		log.Fatal("failed report task", err)
 	}
 	// test
-	fmt.Println("report message, task index:", reportMsg.TaskIndex, "is done?", reportMsg.IsDone)
+	// fmt.Println("report message, task index:", reportMsg.TaskIndex, "is done?", reportMsg.IsDone)
 
 	return reportMsg
 }
@@ -210,8 +210,8 @@ func mapWorker(mapFunction func(string, string) []KeyValue, inputFile string, ma
 	// fmt.Println(numReduce)
 	for i := 0; i < numReduce; i++ {
 		// intermediate file, name rule: mapreduce_mapTaskIndex_i
-		intermediateFile := "intermediate_map" + strconv.Itoa(mapTaskIndex) + "_reduce" + strconv.Itoa(i)
-		fmt.Println("intermediate file name:" + intermediateFile)
+		intermediateFile := "temp-intermediate_map" + strconv.Itoa(mapTaskIndex) + "_reduce" + strconv.Itoa(i)
+		// fmt.Println("intermediate file name:" + intermediateFile)
 		file, err := os.Create(intermediateFile)
 		if err != nil {
 			fmt.Println("failed create file")
@@ -235,13 +235,13 @@ func mapWorker(mapFunction func(string, string) []KeyValue, inputFile string, ma
 }
 
 func reduceWorker(reduceFunction func(string, []string) string, numMap int, reduceTaskIndex int) bool {
-	fmt.Println("reduce worker working")
+	// fmt.Println("reduce worker working")
 	// container to store all key value pairs in intermediate file
 	intermediate := []KeyValue{}
 	// FIXME: redeclare i in the for loop below this one might cause problem?
 	for i := 0; i < numMap; i++ {
 		// get intermediate file name
-		intermediateFile := "intermediate_map" + strconv.Itoa(i) + "_reduce" + strconv.Itoa(reduceTaskIndex)
+		intermediateFile := "temp-intermediate_map" + strconv.Itoa(i) + "_reduce" + strconv.Itoa(reduceTaskIndex)
 		file, err := os.Open(intermediateFile)
 		if err != nil {
 			fmt.Println("reduce worker failed opening file: " + intermediateFile)
@@ -254,7 +254,7 @@ func reduceWorker(reduceFunction func(string, []string) string, numMap int, redu
 		for {
 			var keyVal KeyValue
 			if err := decode.Decode(&keyVal); err != nil {
-				fmt.Println("decode error")
+				// fmt.Println("decode error")
 				break
 			}
 			// append key value to intermediate container
@@ -266,7 +266,7 @@ func reduceWorker(reduceFunction func(string, []string) string, numMap int, redu
 	sort.Sort(sortKey(intermediate))
 
 	// output file
-	name := "output" + strconv.Itoa(reduceTaskIndex)
+	name := "temp-output" + strconv.Itoa(reduceTaskIndex)
 	outputFile, _ := os.Create(name)
 	i := 0
 	// each key
