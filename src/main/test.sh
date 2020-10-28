@@ -139,6 +139,8 @@ rm -f temp-*
 
 
 ####################### test fault tolerance ####################
+
+#  --------------------- word count fault ------------
 sort ../correct_sparkwordcount.txt > temp-correct.txt
 # run master
 go run ../master_main.go ../hamlet.txt 3 & sleep 1
@@ -166,6 +168,7 @@ fi
 
 # remove temp files
 rm -f temp-*
+# --------------------------------------------------
 
 #################################################################
 
