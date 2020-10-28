@@ -2,7 +2,7 @@
 
 # Milestone 2: see branch Milestone2
 
-# Milestone 3: see branch Master
+# Milestone 3: see branch Master and Design Documentation
 
 Group: Xueteng Qian, Haiyang Wu
 
