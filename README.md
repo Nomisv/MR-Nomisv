@@ -8,4 +8,6 @@ Group: Xueteng Qian, Haiyang Wu
 
 We have the same code and files.
 
+When testing, the script will create a new folder called `temp` to store temporary files.
+
 
