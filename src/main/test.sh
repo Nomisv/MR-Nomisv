@@ -143,11 +143,14 @@ rm -f temp-*
 #  --------------------- word count fault ------------
 sort ../correct_sparkwordcount.txt > temp-correct.txt
 # run master
-go run ../master_main.go ../hamlet.txt 3 & sleep 1
+go run ../master_main.go ../hamlet.txt 5 & sleep 1
 # run 3 workers
 go run ../worker_main.go ../wcFault.so &
 go run ../worker_main.go ../wcFault.so &
+go run ../worker_main.go ../wcFault.so &
+go run ../worker_main.go ../wcFault.so &
 go run ../worker_main.go ../wcFault.so 
+
 
 wait
 wait
